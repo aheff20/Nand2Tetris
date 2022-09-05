@@ -1,0 +1,17 @@
+//Aidan Heffron 830003427
+
+ /**
+ * Or gate:
+ * out = 1 if (a == 1 or b == 1)
+ *       0 otherwise
+ */
+
+CHIP Or {
+    IN a, b;
+    OUT out;
+
+    PARTS:
+    // Put your code here:
+    Nor(a=a, b=b, out=AnorB);
+    Nor(a=AnorB, b=AnorB, out=out);
+}

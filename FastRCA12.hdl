@@ -1,0 +1,32 @@
+// Aidan Heffron 830003427
+
+/**
+ * Optimizes the carry propagation delay along RCA4 boundaries
+ * using duplication and parallel assembly of logic 
+ * The chip performs out=a+b
+ * Both inputs a and b are in UNSIGNED format
+ * carry output reflects the overflow 
+ */
+
+
+CHIP FastRCA12 {
+    IN a[12], b[12];
+    OUT out[12], carry;
+	
+    PARTS:
+    // Put your code here:
+    RCA4(a=a[0..3], b=b[0..3], cin=false, out=out[0..3], carry=c1);
+
+    RCA4(a=a[4..7], b=b[4..7], cin=false, out=ncOne, carry=c2);
+    RCA4(a=a[4..7], b=b[4..7], cin=true, out=cOne, carry=c3);
+
+    RCA4(a=a[8..11], b=b[8..11], cin=false, out=ncTwo, carry=c4);
+    RCA4(a=a[8..11], b=b[8..11], cin=true, out=cTwo, carry=c5);
+
+    Mux16(a[0..3]=ncOne, b[0..3]=cOne, sel=c1, out[0..3]=out[4..7]);
+    Mux(a=c2, b=c3, sel=c1, out=carry2);
+
+    Mux16(a[0..3]=ncTwo, b[0..3]=cTwo, sel=carry2, out[0..3]=out[4..7]);
+    Mux(a=c4, b=c5, sel=c2, out=carry);
+    
+}

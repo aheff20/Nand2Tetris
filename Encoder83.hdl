@@ -1,0 +1,38 @@
+//Aidan Heffron 830003427
+
+/**
+ * Encoder 
+ * out always contains the encoded id of the active input
+ * at any time only one bit in a[8] can be 1
+ * idle is 1 if all inputs are inactive, otherwise it is 0
+ */
+
+CHIP Encoder83 {
+    IN a[8];
+    OUT out[3], idle;
+
+    PARTS:
+    // Put your code here:
+
+    //2^0
+    Or(a=a[7], b=a[5], out=SevenOrFive);
+    Or(a=a[3], b=a[1], out=ThreeOrOne);
+    Or(a=SevenOrFive, b=ThreeOrOne, out=TwoTo0);
+
+    //2^1
+    Or(a=a[7], b=a[6], out=SevenOrSix);
+    Or(a=a[3], b=a[2], out=ThreeOrTwo);
+    Or(a=SevenOrSix, b=ThreeOrTwo, out=TwoTo1);
+
+    //2^2
+    Or(a=a[5], b=a[4], out=FiveOrFour);
+    Or(a=SevenOrSix, b=FiveOrFour, out=TwoTo2);
+
+    Or(a=TwoTo0, b=TwoTo1, out=first);
+    Or(a=TwoTo2, b=a[0], out=second);
+    Nor(a=first, b=second, out=idle);
+
+    And(a=TwoTo0, b=TwoTo0, out=out[0]);
+    And(a=TwoTo1, b=TwoTo1, out=out[1]);
+    And(a=TwoTo2, b=TwoTo2, out=out[2]);
+}

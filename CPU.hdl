@@ -1,0 +1,118 @@
+// Aidan Heffron 830003427
+
+/**
+ * The Hack CPU (Central Processing unit), consisting of an ALU,
+ * two registers named A and D, and a program counter named PC.
+ * The CPU is designed to fetch and execute instructions written in 
+ * the Hack machine language. In particular, functions as follows:
+ * Executes the inputted instruction according to the Hack machine 
+ * language specification. The D and A in the language specification
+ * refer to CPU-resident registers, while M refers to the external
+ * memory location addressed by A, i.e. to Memory[A]. The inM input 
+ * holds the value of this location. If the current instruction needs 
+ * to write a value to M, the value is placed in outM, the address 
+ * of the target location is placed in the addressM output, and the 
+ * writeM control bit is asserted. (When writeM==0, any value may 
+ * appear in outM). The outM and writeM outputs are combinational: 
+ * they are affected instantaneously by the execution of the current 
+ * instruction. The addressM and pc outputs are clocked: although they 
+ * are affected by the execution of the current instruction, they commit 
+ * to their new values only in the next time step. If reset==1 then the 
+ * CPU jumps to address 0 (i.e. pc is set to 0 in next time step) rather 
+ * than to the address resulting from executing the current instruction. 
+ */
+
+CHIP CPU {
+
+    IN  inM[16],         // M value input  (M = contents of RAM[A])
+        instruction[16], // Instruction for execution
+        reset;           // Signals whether to re-start the current
+                         // program (reset==1) or continue executing
+                         // the current program (reset==0).
+
+    OUT outM[16],        // M value output
+        writeM,          // Write to M? 
+        addressM[15],    // Address in data memory (of M)
+        pc[15];          // address of next instruction
+
+    PARTS:
+    // Put your code here:
+    // 15   14   13   12   11   10   9   8   7   6   5   4   3   2   1   0 
+    //  i   x1   x2    a   c1   c2  c3  c4  c5  c6  d1  d2  d3  j1  j2  j3
+
+    // if i == 1:
+    //    c reg
+    // else:
+    //    a reg
+
+
+    Not(in=instruction[15], out=i);
+    Mux16(a=outALU, b=instruction, sel=i, out=A);
+
+    //Check A Reg
+    //if d1 == 1:
+    //   C instruction to load A
+    //if i == 0:
+    //   A instruction
+
+    Or(a=i, b=instruction[5], out=aActive);
+    ARegister(in=A, load=aActive, out=outA, out[0..14]=addressM);
+
+    //ALU
+    // If a == 1:
+    //   send inM into ALU
+    // else:
+    //   send A reg into ALU
+
+    And(a=instruction[15], b=instruction[12], out=iAnda);
+    Mux16(a=outA , b=inM , sel=iAnda, out=ALUin);
+
+    ALU(x=outD, y=ALUin, zx=instruction[11], nx=instruction[10], zy=instruction[9], ny=instruction[8], f=instruction[7], no=instruction[6], out=outM, out=outALU, zr=zr, ng=ng);
+    
+    //D Reg
+    And(a=instruction[15], b=instruction[4], out=dActive);
+    DRegister(in=outALU, load=dActive, out=outD);
+
+    //WriteM
+    //if i && d3, write m
+
+    And(a=instruction[15], b=instruction[3], out=writeM);
+
+    //Jumps
+    //if outALU == 0 && j2 == 1 JEQ
+    //if outALU == pos && j3 == 1 JGT
+    //if outALU == neg && j1 == 1 JLT
+
+    And(a=instruction[1], b=instruction[15], out=equal);
+    And(a=equal, b=zr, out=jump0);
+    Not(in=zr, out=notZR);
+
+    And(a=instruction[2], b=instruction[15], out=nega);
+    And(a=nega, b=ng, out=jump1);
+    Not(in=ng, out=notNG);
+
+    And(a=instruction[0], b=instruction[15], out=posi);
+    And(a=notNG, b=notZR, out=neither);
+    And(a=posi, b=neither, out=jump2);
+
+    Or(a=jump0, b=jump1, out=tempJump);
+    Or(a=tempJump, b=jump2, out=jump);
+
+    //PC
+    //If you don't jump, increase the clock
+
+    Not(in=jump, out=noJump);
+    PC(in=outA, load=jump, inc=noJump, reset=reset, out[0..14]=pc);
+
+    
+
+
+
+
+
+
+
+
+
+
+}

@@ -1,0 +1,19 @@
+//Aidan Heffron 830003427
+
+/**
+ * Exclusive-or gate:
+ * out = not (a == b)
+ */
+
+CHIP Xor {
+    IN a, b;
+    OUT out;
+
+    PARTS:
+    // Put your code here:
+    And(a=a, b=b, out=AandB);
+    Not(in=AandB, out=notAandB);
+    Or(a=a, b=b, out=AorB);
+
+    And(a=notAandB, b=AorB, out=out);
+}
